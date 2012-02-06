@@ -15,7 +15,8 @@ namespace InvincibleTiles
     [APIVersion(1,11)]
     public class InvincibleTiles : TerrariaPlugin
     {
-        private List<int> blacklistedTiles  = new List<int>();
+        private List<int> blacklistedTiles = new List<int>();
+        private List<int> blacklistedWalls = new List<int>();
         private IDbConnection db;
 
         public override Version Version
@@ -46,13 +47,11 @@ namespace InvincibleTiles
 
         public override void Initialize()
         {
-            Console.WriteLine(Commands.ChatCommands.Count);
-            
-            Commands.ChatCommands.Add(new Command("blackTile", AddTile, "blacktile"));
-            Commands.ChatCommands.Add(new Command("whiteTile", DelTile, "whitetile"));
+            Commands.ChatCommands.Add(new Command("blackTile", AddTile, "blacktile", "bt"));
+            Commands.ChatCommands.Add(new Command("whiteTile", DelTile, "whitetile", "wt"));
+            Commands.ChatCommands.Add(new Command("blackWall", AddWall, "blackwall","bw"));
+            Commands.ChatCommands.Add(new Command("whiteWall", DelWall, "whitewall","ww"));
             GetDataHandlers.TileEdit += TileKill;
-
-            Console.WriteLine(Commands.ChatCommands.Count);
         }
 
         private void Start()
@@ -114,8 +113,17 @@ namespace InvincibleTiles
 	
 			while (reader.Read())
 			{
-			    blacklistedTiles.Add(reader.Get<int>("ID"));
-			}
+			    int id = reader.Get<int>("ID");
+			    int type = reader.Get<int>("Type");
+			    if (type == 0)
+			    {
+			        blacklistedTiles.Add(id);
+			    }
+			    else
+			    {
+			        blacklistedWalls.Add(id);
+			    }
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -143,9 +151,9 @@ namespace InvincibleTiles
                 return;
             }
 
-            String query = "INSERT INTO BlacklistedTiles (ID) VALUES (@0);";
+            String query = "INSERT INTO BlacklistedTiles (ID, Type) VALUES (@0,@1);";
 
-            if(db.Query(query, id) != 1)
+            if(db.Query(query, id,0) != 1)
             {
                 Log.ConsoleError("Inserting into the database has failed!");
                 args.Player.SendMessage(String.Format("Inserting into the database has failed!", id), Color.Red);
@@ -171,9 +179,9 @@ namespace InvincibleTiles
                 args.Player.SendMessage(String.Format("Tile id '{0}' is not a valid number.", id), Color.Red);
                 return;
             }
-            String query = "DELETE FROM BlacklistedTiles WHERE ID = @0;";
+            String query = "DELETE FROM BlacklistedTiles WHERE ID = @0 AND Type = @1;";
 
-            if (db.Query(query, id) != 1)
+            if (db.Query(query, id, 0) != 1)
             {
                 Log.ConsoleError("Removing from the database has failed!");
                 args.Player.SendMessage(String.Format("Removing from the database has failed!  Are you sure {0} is banned?", id), Color.Red);
@@ -185,9 +193,75 @@ namespace InvincibleTiles
             }
         }
 
+        private void AddWall(CommandArgs args)
+        {
+            if (args.Parameters.Count < 1)
+            {
+                args.Player.SendMessage("You must specify a wall to add.", Color.Red);
+                return;
+            }
+            string tile = args.Parameters[0];
+            int id;
+            if (!int.TryParse(tile, out id))
+            {
+                args.Player.SendMessage(String.Format("Wall id '{0}' is not a valid number.", id), Color.Red);
+                return;
+            }
+
+            String query = "INSERT INTO BlacklistedTiles (ID, Type) VALUES (@0, @1);";
+
+            if (db.Query(query, id, 1) != 1)
+            {
+                Log.ConsoleError("Inserting into the database has failed!");
+                args.Player.SendMessage(String.Format("Inserting into the database has failed!", id), Color.Red);
+            }
+            else
+            {
+                args.Player.SendMessage(String.Format("Successfully banned {0}", id), Color.Red);
+                blacklistedWalls.Add(id);
+            }
+        }
+
+        private void DelWall(CommandArgs args)
+        {
+            if (args.Parameters.Count < 1)
+            {
+                args.Player.SendMessage("You must specify a wall to remove.", Color.Red);
+                return;
+            }
+            string tile = args.Parameters[0];
+            int id;
+            if (!int.TryParse(tile, out id))
+            {
+                args.Player.SendMessage(String.Format("Wall id '{0}' is not a valid number.", id), Color.Red);
+                return;
+            }
+            String query = "DELETE FROM BlacklistedTiles WHERE ID = @0 AND Type = @1;";
+
+            if (db.Query(query, id, 1) != 1)
+            {
+                Log.ConsoleError("Removing from the database has failed!");
+                args.Player.SendMessage(String.Format("Removing from the database has failed!  Are you sure {0} is banned?", id), Color.Red);
+            }
+            else
+            {
+                args.Player.SendMessage(String.Format("Successfully unbanned {0}", id), Color.Green);
+                blacklistedWalls.Remove(id);
+            }
+        }
+
         private void TileKill(object sender, GetDataHandlers.TileEditEventArgs args)
         {
-            if (blacklistedTiles.Contains(Main.tile[args.X, args.Y].type))
+            if (args.Player.Group.HasPermission("breakinvincible"))
+                return;
+
+            Console.WriteLine("{0}: {1}, {2}", args.EditType, Main.tile[args.X, args.Y].Data.wall, Main.tile[args.X, args.Y].Data.type);
+            if (args.EditType == 2 && blacklistedWalls.Contains(Main.tile[args.X, args.Y].Data.wall))
+            {
+                args.Handled = true;
+                TSPlayer.All.SendTileSquare(args.X, args.Y, 1);
+            }
+            else if ((args.EditType == 0 || args.EditType == 4) && blacklistedTiles.Contains(Main.tile[args.X, args.Y].Data.type) )
             {
                 args.Handled = true;
                 TSPlayer.All.SendTileSquare(args.X,args.Y, 1);
