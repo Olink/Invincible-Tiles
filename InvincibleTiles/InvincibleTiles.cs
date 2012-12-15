@@ -255,7 +255,6 @@ namespace InvincibleTiles
             if (args.Player.Group.HasPermission("breakinvincible"))
                 return;
 
-            Console.WriteLine("{0}: {1}, {2}", args.EditType, Main.tile[args.X, args.Y].Data.wall, Main.tile[args.X, args.Y].Data.type);
             if (args.EditType == 2 && blacklistedWalls.Contains(Main.tile[args.X, args.Y].Data.wall))
             {
                 args.Handled = true;
