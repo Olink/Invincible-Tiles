@@ -2,17 +2,16 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Linq;
-using System.Text;
 using Mono.Data.Sqlite;
 using MySql.Data.MySqlClient;
+using TerrariaApi.Server;
 using TShockAPI;
 using TShockAPI.DB;
 using Terraria;
 
 namespace InvincibleTiles
 {
-    [APIVersion(1,11)]
+    [ApiVersion(1,14)]
     public class InvincibleTiles : TerrariaPlugin
     {
         private List<int> blacklistedTiles = new List<int>();
@@ -255,13 +254,12 @@ namespace InvincibleTiles
             if (args.Player.Group.HasPermission("breakinvincible"))
                 return;
 
-            Console.WriteLine("{0}: {1}, {2}", args.EditType, Main.tile[args.X, args.Y].Data.wall, Main.tile[args.X, args.Y].Data.type);
-            if (args.EditType == 2 && blacklistedWalls.Contains(Main.tile[args.X, args.Y].Data.wall))
+            if (args.Action == GetDataHandlers.EditAction.KillWall && blacklistedWalls.Contains(Main.tile[args.X, args.Y].wall))
             {
                 args.Handled = true;
                 TSPlayer.All.SendTileSquare(args.X, args.Y, 1);
             }
-            else if ((args.EditType == 0 || args.EditType == 4) && blacklistedTiles.Contains(Main.tile[args.X, args.Y].Data.type) )
+			else if ((args.Action == GetDataHandlers.EditAction.KillTile || args.Action == GetDataHandlers.EditAction.KillTileNoItem || args.Action == GetDataHandlers.EditAction.PoundTile) && blacklistedTiles.Contains(Main.tile[args.X, args.Y].type))
             {
                 args.Handled = true;
                 TSPlayer.All.SendTileSquare(args.X,args.Y, 1);
