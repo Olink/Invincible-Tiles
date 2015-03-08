@@ -11,7 +11,7 @@ using Terraria;
 
 namespace InvincibleTiles
 {
-    [ApiVersion(1,16)]
+    [ApiVersion(1,17)]
     public class InvincibleTiles : TerrariaPlugin
     {
         private List<int> blacklistedTiles = new List<int>();
