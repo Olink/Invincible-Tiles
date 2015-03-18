@@ -109,19 +109,19 @@ namespace InvincibleTiles
             String query = "SELECT * FROM BlacklistedTiles";
 
             var reader = db.QueryReader(query);
-	
-			while (reader.Read())
-			{
-			    int id = reader.Get<int>("ID");
-			    int type = reader.Get<int>("Type");
-			    if (type == 0)
-			    {
-			        blacklistedTiles.Add(id);
-			    }
-			    else
-			    {
-			        blacklistedWalls.Add(id);
-			    }
+    
+            while (reader.Read())
+            {
+                int id = reader.Get<int>("ID");
+                int type = reader.Get<int>("Type");
+                if (type == 0)
+                {
+                    blacklistedTiles.Add(id);
+                }
+                else
+                {
+                    blacklistedWalls.Add(id);
+                }
             }
         }
 
@@ -251,18 +251,41 @@ namespace InvincibleTiles
 
         private void TileKill(object sender, GetDataHandlers.TileEditEventArgs args)
         {
-            if (args.Player.Group.HasPermission("breakinvincible"))
-                return;
-
-            if (args.Action == GetDataHandlers.EditAction.KillWall && blacklistedWalls.Contains(Main.tile[args.X, args.Y].wall))
+            if (args.Action == GetDataHandlers.EditAction.KillWall && blacklistedWalls.Contains(Main.tile[args.X, args.Y].wall) && !args.Player.Group.HasPermission("invincibletile.breakwall"))
             {
                 args.Handled = true;
+                args.Player.SendErrorMessage("You do not have permission to break protected walls.");
                 TSPlayer.All.SendTileSquare(args.X, args.Y, 1);
             }
-			else if ((args.Action == GetDataHandlers.EditAction.KillTile || args.Action == GetDataHandlers.EditAction.KillTileNoItem || args.Action == GetDataHandlers.EditAction.PoundTile) && blacklistedTiles.Contains(Main.tile[args.X, args.Y].type))
+            else if ((args.Action == GetDataHandlers.EditAction.KillTile || args.Action == GetDataHandlers.EditAction.KillTileNoItem || args.Action == GetDataHandlers.EditAction.PoundTile) && blacklistedTiles.Contains(Main.tile[args.X, args.Y].type) && !args.Player.Group.HasPermission("invincibletile.breaktile"))
             {
                 args.Handled = true;
+                args.Player.SendErrorMessage("You do not have permission to modify protected tiles.");
                 TSPlayer.All.SendTileSquare(args.X,args.Y, 1);
+            }
+            else if (args.Action == GetDataHandlers.EditAction.PlaceTile)
+            {
+				if (blacklistedWalls.Contains(Main.tile[args.X, args.Y].wall) && !args.Player.Group.HasPermission("invincibletile.placeoverprotectedwalls"))
+                {
+                    args.Handled = true;
+                    args.Player.SendErrorMessage("You do not have permission to place tiles over protected walls.");
+                    TSPlayer.All.SendTileSquare(args.X, args.Y, 1);
+                }
+                else if (blacklistedTiles.Contains(Main.tile[args.X, args.Y].type) && !args.Player.Group.HasPermission("invincibletile.placetile"))
+                {
+                    args.Handled = true;
+                    args.Player.SendErrorMessage("You do not have permission to place tiles that are protected.");
+                    TSPlayer.All.SendTileSquare(args.X, args.Y, 1);
+                }
+            }
+            else if (args.Action == GetDataHandlers.EditAction.PlaceWall)
+            {
+                if (blacklistedWalls.Contains(Main.tile[args.X, args.Y].wall) && !args.Player.Group.HasPermission("invincibletile.placewall"))
+                {
+                    args.Handled = true;
+                    args.Player.SendErrorMessage("You do not have permission to place walls that are protected.");
+                    TSPlayer.All.SendTileSquare(args.X, args.Y, 1);
+                }
             }
         }
     }
