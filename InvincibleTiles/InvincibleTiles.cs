@@ -84,7 +84,7 @@ namespace InvincibleTiles
                 }
                 catch (MySqlException ex)
                 {
-                    Log.Error(ex.ToString());
+                    TShock.Log.Error(ex.ToString());
                     throw new Exception("MySql not setup correctly");
                 }
             }
@@ -101,7 +101,7 @@ namespace InvincibleTiles
                                               db.GetSqlType() == SqlType.Sqlite
                                                 ? (IQueryBuilder)new SqliteQueryCreator()
                                                 : new MysqlQueryCreator());
-            creator2.EnsureExists(table2);
+            creator2.EnsureTableStructure(table2);
         }
 
         private void ReadDb()
@@ -154,7 +154,7 @@ namespace InvincibleTiles
 
             if(db.Query(query, id,0) != 1)
             {
-                Log.ConsoleError("Inserting into the database has failed!");
+                TShock.Log.ConsoleError("Inserting into the database has failed!");
                 args.Player.SendMessage(String.Format("Inserting into the database has failed!", id), Color.Red);
             }
             else
@@ -182,7 +182,7 @@ namespace InvincibleTiles
 
             if (db.Query(query, id, 0) != 1)
             {
-                Log.ConsoleError("Removing from the database has failed!");
+				TShock.Log.ConsoleError("Removing from the database has failed!");
                 args.Player.SendMessage(String.Format("Removing from the database has failed!  Are you sure {0} is banned?", id), Color.Red);
             }
             else
@@ -211,7 +211,7 @@ namespace InvincibleTiles
 
             if (db.Query(query, id, 1) != 1)
             {
-                Log.ConsoleError("Inserting into the database has failed!");
+				TShock.Log.ConsoleError("Inserting into the database has failed!");
                 args.Player.SendMessage(String.Format("Inserting into the database has failed!", id), Color.Red);
             }
             else
@@ -239,7 +239,7 @@ namespace InvincibleTiles
 
             if (db.Query(query, id, 1) != 1)
             {
-                Log.ConsoleError("Removing from the database has failed!");
+				TShock.Log.ConsoleError("Removing from the database has failed!");
                 args.Player.SendMessage(String.Format("Removing from the database has failed!  Are you sure {0} is banned?", id), Color.Red);
             }
             else
