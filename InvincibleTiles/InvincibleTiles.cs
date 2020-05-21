@@ -8,10 +8,11 @@ using TerrariaApi.Server;
 using TShockAPI;
 using TShockAPI.DB;
 using Terraria;
+using Microsoft.Xna.Framework;
 
 namespace InvincibleTiles
 {
-    [ApiVersion(1,17)]
+    [ApiVersion(2,1)]
     public class InvincibleTiles : TerrariaPlugin
     {
         private List<int> blacklistedTiles = new List<int>();
